@@ -1,0 +1,572 @@
+\documentclass{article}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{amsthm}
+\usepackage{mathtools}
+\usepackage[margin=1.0in]{geometry}
+\usepackage[english]{babel}
+\newtheorem{theorem}{Theorem}
+\newtheorem{definition}{Definition}
+\newtheorem{lemma}{Lemma}
+\newcommand{\indep}{\perp \!\!\! \perp}
+\newcommand{\E}{\mathbb{E}}
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\boldX}{\mathbf{X}}
+\newcommand{\boldY}{\mathbf{Y}}
+\newcommand{\argmin}{\text{arg}\min}
+\newcommand{\xbar}{\overline{x}}
+\newcommand{\ybar}{\overline{y}}
+\newcommand{\sumiton}{\sum_{i=1}^n}
+\newcommand{\betahat}{\hat{\beta}}
+\usepackage{scalerel,stackengine}
+\stackMath
+\newcommand\reallywidehat[1]{%
+\savestack{\tmpbox}{\stretchto{%
+  \scaleto{%
+    \scalerel*[\widthof{\ensuremath{#1}}]{\kern-.6pt\bigwedge\kern-.6pt}%
+    {\rule[-\textheight/2]{1ex}{\textheight}}%WIDTH-LIMITED BIG WEDGE
+  }{\textheight}% 
+}{0.5ex}}%
+\stackon[1pt]{#1}{\tmpbox}%
+}
+\parskip 1ex
+
+\title{MATH423 Notes}
+\author{Chany Ahn}
+\date{}
+
+\begin{document}
+
+\maketitle
+\newpage
+\tableofcontents
+\newpage
+\section{Introduction}
+Regression is about quantitative, predictive relationships.
+\begin{itemize}
+    \item \textbf{Prediction}: make statements about unobserved data (future data).
+    \item \textbf{Inference}: make statements about the unknown data generating mechanism.
+\end{itemize}
+\section{Optimal Linear Predictor}
+Predicting a random variable from its distribution. Given a single random variable $Y$, where the distribution is known, the optimal way of predicting $Y$ is:
+\begin{align}
+    m = \E(Y)
+\end{align}
+This is optimal because it \textit{minimizes the mean square error}.
+
+The criteria to measure goodness of a prediction: let $m$ be the prediction of $Y$:
+\begin{itemize}
+    \item $Y - m$: prediction error
+    \item $(Y-m)^2$: squared prediction error.
+\end{itemize}
+Use \textit{mean squared error}:
+\begin{align}
+    MSE(m) = \E[(Y - m)^2]
+\end{align}
+as the criterion to measure the prediction performance. Since we want to minimize the MSE, we need to solve for the following relation:
+\begin{align}
+    \min_m MSE(m) = \min_m \E[(Y-m)^2]
+\end{align}
+Let $m^*$ represent the value of $m$ that minimizes $MSE(m)$, then we get 
+\begin{align}
+    m^* = \text{arg}\min_m \E[(Y-m)^2]
+\end{align}
+where $m^*$ is the minimizer. If $x^*$ is the minimizer of $f(x)$, then we need to solve for:
+\begin{align}
+    \frac{df(x)}{dx}\bigg|_{x=x^*} = 0
+\end{align}
+If we take $\E[|Y - m|]$, which is the mean absolute deviation (MAD), then
+\begin{align}
+    m^* = median(Y)
+\end{align}
+The advantage of this is it is more stable against outliers. The disadvantage is that it is computationally inefficient.
+\section{Predicting One Random Variable from Other Variables}
+Consider two types of variables:
+\begin{itemize}
+    \item ``Output": $Y$ -- measure of interest.
+    \begin{itemize}
+        \item Outcome
+        \item \underline{Response variable}
+        \item Dependent variable
+    \end{itemize}
+    \item ``Input": $X$ -- variable(s) that correlated to the ``output".
+    \begin{itemize}
+        \item Features
+        \item Covariates or factors
+        \item \underline{Predictors}
+        \item Explanatory variables
+    \end{itemize}
+\end{itemize}
+To predict $Y$ using the information of $X$
+\begin{align}
+    Y \approx m(X)
+\end{align}
+The prediction function $m(X)$ does not necessarily imply causality. Thus, we use the \textit{regression function}:
+\begin{align}
+    m(x) = \E[Y | X = x]
+\end{align}
+This is the ``optimal" prediction of $Y$, where we use MSE as the criterion to measure the prediction accuracy. Thus, if we use the MSE criterion, we get:
+\begin{align}
+    m^*(\cdot) = \text{arg}\min_{m(\cdot)} \E_{X,Y}[(Y - m(X))^2]
+\end{align}
+where we can show that
+\begin{align}
+    m^*(x) = \E_{Y|X}[Y| X = x] = \E[Y|X = x]
+\end{align}
+Note on conditional expectation:
+\[\E_{X,Y}[g(X,Y)] = \E_X\{\E_{Y|X}[g(Y,X)]\}\]
+\begin{proof}
+    See hand-out.
+\end{proof}
+\noindent
+Note:
+\begin{itemize}
+    \item If we use $\E[|Y - m(X)|]$ as the criterion, then the optimal function is $m^*(x) = median(Y | X = x)$.
+    \item At no point was the marginal distribution of $(X,Y)$ specified.
+    \item At no point did we assume the fluctuation of $Y$ was Gaussian or symmetric.
+    \item At no time did we assume that $X$ came before $Y$ in time or that $X$ causes $Y$.
+\end{itemize}
+\section{Nearest-Neighbor Regression}
+We estimate the regression function through the equation
+\begin{align}
+    m^*(x) = \E(Y | X = x)
+\end{align}
+using the $n$ observations, $(x_i,y_i)$, where $x_i \in \R^p$. One way to estimate $m^*(x)$ is:
+\begin{align}
+    \hat{m}(x) = average(\{y_i : x_i = x\})
+\end{align}
+The above can be difficult because realistically there will be few points at exactly $x_i$. So, we cannot estimate $m^*(x)$ directly. So, we can just relax the definition:
+\begin{align*}
+    \hat{m}(x) &= average(\{y_i : x_i \text{ equal to or very close to } x\}) \\
+    &= \frac{1}{k}\sum_{x_i \in N_k(x)}y_i
+\end{align*}
+$N_k(x)$ is the neighborhood of $x$ defined by $k$ closest points to $x_i$ in the training sample. There are different distance metrics to compute the nearest neighbours, usually the Euclidean distance).
+\subsection{Theoretical Guarantee of KNN}
+Let $X \in \R^p$ and $Y \in \R$. KNN is good for small $p$ (i.e. $p \leq 4$ and large $N$). Under mild regularity conditions on joint probability distributions of $P(X,Y)$, one can show that as $N,k \rightarrow \infty$, $\frac{k}{N} \rightarrow 0$, then
+\begin{align}
+    \hat{m}(x) = \frac{1}{k}\sum_{x_i \in N_k(x)} \rightarrow \E(Y|X = x)
+\end{align}
+\section{Curse of Dimensionality}
+For small $p$, we can always find a fairly large neighborhood of observations close to the target $x$ and average them. However, for a large $p$, if we consider the KNN inputs, $X$, \underline{uniformly distributed} in a $p$-dimensional unit hypercube, and we want to predict a target $x$, we must set up a neighborhood around $x$ to capture a fraction $R$ of the observation.
+
+The expected edge length (radius):
+\begin{align}
+    L_p(R) = R^{\frac{1}{p}}
+\end{align}
+\underline{Example}: If we let $p=10$, to capture 1\% or 10\% of the data to form a local average, we must cover $L_{10}(0.01) = 0.63$ and $L_{10}(0.1) = 0.8$ of the range of each input. Such neighbourhoods are no longer ``local" (there are a lot of good videos on this topic).
+\section{Optimal Linear Prediction}
+In general, $m(x) = \E(Y|X = x)$ might have a complicated form:
+\begin{itemize}
+    \item KNN: $\E(Y|X = x) = ave\{y_i : x_i \in N_k(x)\}$
+    \item Linear Regression: $\E(Y|X = x) x^\top\beta$
+    \item Additive Model: $\E(Y|X = x) = f_1(x_1) + \ldots f_p(x_p)$, $x \in \R^p$
+    \item Decision Tree: $\E(Y|X = x) = T(x)$
+    \item Random Forest/Gradient Boosting: $\E(Y|X = x) = \sum_{m=1}^M\beta_mT_m(x)$
+    \item Deep Learning: $\E(Y|X = x) = (\ldots \sigma(W_2\sigma(W_1x))$
+    \item SVM: $\E(Y|X = x) = \sum_i \alpha_i k(x,x_i)$, where $k(x,x_i)$ is the kernel.
+\end{itemize}
+To simplify $m(X)$, we restrict 
+\begin{align}
+m(X) = \E(Y|X) = \beta_0 + \beta_1X    
+\end{align}
+NoteL we only have one predictor $X \in \R$.
+\bigbreak\noindent
+The question we want to ask is: \textit{what are the optimal values of $\beta_0$ and $\beta_1$ that minimizes MSE?}
+\bigbreak\noindent
+We ASSUME the distribution of $(X,Y)$ is known. Thus,
+\begin{align}
+    (\beta_0^*,\beta_1^*) &= \argmin_{(\beta_0,\beta_1)}\E_{X,Y}[(Y-m(x))^2]\\
+    &= \argmin_{(\beta_0,\beta_1)}\E_{X,Y}[(Y-(\beta_0 + \beta_1X))^2]
+\end{align}
+We can come up with analytical solutions for both:
+\begin{align}
+    \beta_0^* &= \E(Y) - \beta_1^*\E(X)\\
+    \beta_1^* &= \frac{Cov(X,Y)}{Var(X)}
+\end{align}
+\begin{proof}
+    See in handout.\\
+\end{proof}
+\noindent
+$m^*(X) = \beta_0^* + \beta_1^*X$ is called the ``true" regression line (the optimal linear prediction function). If the assumption is not satisfied, then we may get a linear prediction for data without a linear trend.
+\bigbreak\noindent
+\underline{Note}: The optimal regression line goes through $(\E(X), \E(Y))$.
+\begin{align}
+    m^*(X) &= \beta_0^* + \beta_1^*X\\
+    &= \E(Y) - \beta_1^*\E(X) + \beta_1^*x \text{ (from (18))}
+\end{align}
+If we plugin $x = \E(X)$, we get $m^*(\E(X)) = \E(Y)$. But, $\E(Y| X=x)$ does not necessarily go through $(\E(X), \E(Y))$.
+\bigbreak\noindent If $X$ and $Y$ are ``centered", i.e. $\E(X) = \E(Y) = 0$, the optimal regression line goes through $(0,0)$ since $\beta_0^* = 0$.
+\bigbreak\noindent Things to notice for $\beta_1^*$:
+\begin{itemize}
+    \item $Cov(X,Y)$ incerases, then $\beta_1^*$ increase.
+    \item $Var(X)$ (or the spread of your input data increases), $\beta_1^*$ decreases.
+\end{itemize}
+The optimal slope $\beta_1^*$ doesn't change if we use $Y-c$ and $X-c'$. This is NOT true for the intercept $\beta_0^*$.
+\bigbreak\noindent Note, non-linear patters cannot be appropriately modelled by this predictor. Imagine a true regression function:
+\begin{align}
+    \E(Y|X = x) = e^x
+\end{align}
+If we do a Taylor expansion at $X = x_0$, then we get:
+\begin{align}
+    e^x &= e^{x_0} + \frac{de^x}{dx}\bigg|_{x=x_0}(x-x_0) + \frac{1}{2}\frac{d^2e^x}{dx^2}\bigg|_{x=x_0}(x-x_0)^2 + \ldots\\
+    &= e^{x_0} + e^{x_0}(x-x_0) + \frac{1}{2} e^{x_0}(x-x_0)^2 + \ldots
+\end{align}
+The quadratic term must be dominated by the linear term for it to have a significant influence.
+\begin{align}
+    \frac{1}{2}e^{x_0}|x-x_0|^2 &<< e^{x_0}|x-x_0|\\
+    \frac{|x-x_0|^2}{|x-x_0|} &<< \frac{2e^{x_0}}{e^{x_0}}\\
+    |x-x_0| &<< 2
+\end{align}
+\section{Estimating Optimal Linear Prediction using Data (Plug-in Estimator)}
+To estimate the optimal linear prediction from $n$ observations of data, $(x_1,y_1) \ldots (x_n,y_n)$, we use the estimator:
+\begin{align}
+    \beta_1^* \approx \hat{\beta}_1 = \frac{\reallywidehat{Cov}(X,Y)}{\reallywidehat{Var}(X)} = \frac{\sumiton (y_i - \ybar)(x_i - \xbar)}{\sumiton(x_i - \xbar)^2}
+\end{align}
+where $\ybar,\xbar$ are the sample means of the output and input, respectively.
+\begin{align}
+    \beta_0^* \approx \hat{\beta}_0 = \hat{\E}(Y) - \hat{\beta}_1\hat{E}(X) = \ybar - \hat{\beta}_1\xbar
+\end{align}
+Thus, the fitted regression line is
+\begin{align}
+    m^*(x) \approx \hat{m}(x) &= \hat{\beta}_0 + \hat{\beta}_1x\\
+    &= \left[\ybar - \frac{\sumiton (y_i - \ybar)(x_i - \xbar)}{\sumiton(x_i - \xbar)^2}\xbar
+    \right] + \left[\frac{\sumiton (y_i - \ybar)(x_i - \xbar)}{\sumiton(x_i - \xbar)^2}\right]x
+\end{align}
+\begin{proof}
+    See handout.\\
+\end{proof}
+\bigbreak\noindent The fitted regression line, $\hat{m}(x)$ goes through $(\xbar,\ybar)$ (do the calculations, they're very simple).
+\bigbreak\noindent If the data is centered, then the fitted line goes through $(0,0)$ (do the calculations, they're very simple).
+\bigbreak\noindent The slope does not change under the shift of the data ($y_i' = y_i - c$, $X_i' = x_i - c'$).
+\section{Simple Linear Regression}
+In order to do inference, we have to make assumptions and believe our data is generated from the SLR model.
+\bigbreak\noindent\underline{Model Assumptions}:
+\begin{enumerate}
+    \item (Arbitrary input) The distribution $X_1$ is arbitrary ($X_1$ can be even nonrandom).
+    \item (Linear function and additive error)
+    \[Y = \beta_0 + \beta_1X_1 + \varepsilon\]
+    We want to distinguish between deterministic ($Y = \beta_0 + \beta_1X_1$) and non-deterministic functions ($Y = \beta_0 + \beta_1X_1 + \varepsilon$).
+    
+    The noise variable $\varepsilon$ may represent:
+    \begin{itemize}
+        \item Other factors not considered in the model (but associated with fluctuation in $Y$).
+        \item Measurement errors.
+        \item Combination of both.
+    \end{itemize}
+    \item (Zero mean and constant variance error): $\E(\varepsilon) = 0$ and $Var(\varepsilon) = \sigma^2 > 0$ (doesn't change with $X_1$).
+    
+    Note, if $\varepsilon$ has nonzero mean ($\E(\varepsilon) = c$), we can find a random variable $\varepsilon'$ with $\E(\varepsilon') = 0$ and $Var(\varepsilon') = \sigma^2$, s.t. $\varepsilon = \varepsilon' + c \Rightarrow \varepsilon' = \varepsilon - c$
+    
+    The original model can be re-written as:
+    \begin{align}
+        Y &= \beta_0 + \beta_1X_1 + \varepsilon\\
+        &= \beta_0 + \beta_1X_1 \varepsilon' + c\\
+        &= (\beta_0 + c) + \beta_1X_1 + \varepsilon'\ \ (\beta_0 + c = \beta_0')\\
+        &= \beta_0' + \beta_1X_1 +  \varepsilon'
+    \end{align}
+    \item (Independent error) $\varepsilon \indep X_1$ (``statistically" independent). Thus, $f(\varepsilon,x_1) = f(\varepsilon)f(x_1)$ and $\E(\varepsilon|X_1) = \E(\varepsilon)$.
+    
+    We ignore the ``intransitive" case. Most time, statistical independence bewteen two variables indicates that there is no (causal) relationship between two variables, but exceptions exist!
+\end{enumerate}
+\underline{Intransitive Case}:
+Let's consider $X$ and $Z$ which are two independent fair coins, and $Y$ which are defined as such:
+\[X = \begin{cases}
+1 & \text{head}\\
+0 & \text{tail}
+\end{cases},\ Z = \begin{cases}
+1 & \text{head}\\
+0 & \text{tail}
+\end{cases},\ Y = \begin{cases}
+1 & \text{if } X = Z\\
+0 & \text{if } X \ne Z
+\end{cases}\]
+$X$ and $Z$ are the causes of $Y$, but $Y$ is ``statistically" independent to $X$. To show this, we need to show that $P(Y=1|X=1) =  P(Y=1)$.
+\begin{align*}
+    P(X = 1) &= P(Z=1) = \frac{1}{2}\\
+    P(Y=1|X=1) &= P(Y=1|X=0) = \frac{1}{2}\\
+    P(Z=1|X=1) &= P(Z=1) = \frac{1}{2}\\
+    P(Y=1) &= P(Y=1|X=0)P(X=0) + P(Y=1|X=1)P(X=1)\\
+    &= \frac{1}{2}\cdot \frac{1}{2} + \frac{1}{2} \cdot \frac{1}{2} = \frac{1}{2}\\
+    &= P(Y=1|X=1) = P(Y=1|X=0)
+\end{align*}
+Therefore, $Y$ and $X$ are independent even if $X$ causes $Y$.
+\bigbreak\noindent The SLR assumptions actually implies that the true regression function is linear (i.e. true regression line).
+\begin{align}
+    \E(Y|X_1 = x_1) &= \E(\beta_0 + \beta_1X_1 + \varepsilon| X_1 = x_1)\\
+    &= \E(\beta_0 + \beta_1X_1 | X_1 = x_1) + \E(\varepsilon|X_1 = x_1)\\
+    &= \beta_0 + \beta_1x_1
+\end{align}
+where $\E(\varepsilon | X_1 = x_1) = \E(\varepsilon)$ since $\varepsilon \indep X_1$. We note that $Y$ has constant variance, thus
+\begin{align}
+    Var(Y|X_1 = x_1) &= Var(\beta_0 + \beta_1X_1 + \varepsilon | X = x_1)\\
+    &= Var(\beta_0 + \beta_1x_1) + Var(\varepsilon | X = x_1)\\
+    &= 0 + Var(\varepsilon) = \sigma^2
+\end{align}
+So, we summarize these results as:
+\begin{align}
+    Y|X_1 = x_1 \sim D(\beta_0 + \beta_1x_1, \sigma^2)
+\end{align}
+Where $D$ is a distribution, $\beta_0 + \beta_1x_1$ is the expectation, and $\sigma^2$ is the variance.
+\bigbreak\noindent
+We think of the SLR assumptions as a modeling decision that (we hope) will be useful, rather than the fact about the true underlying relationship.
+\begin{align}
+    Y = \beta_0 + \beta_1X_1 + \varepsilon \Rightarrow Y = f(X_1) + \varepsilon
+\end{align}
+where $\E(Y|X_1 = x_1) = f(x_1)$.
+\subsection{Parameter Interpretations}
+\begin{itemize}
+    \item Interpretation of $\beta_0$:
+    
+    It is the intercept, and the expected value of $Y$ when $X_1 = 0$, i.e.
+    \begin{align}
+        \E(Y|X_1 = 0) = \E(\beta_0 + \beta_1 \cdot 0 | X_1 = 0) = \beta_0
+    \end{align}
+    \item Interpretation of $\beta_1$:
+    
+    It is the slope of the regression function.
+    \begin{align}
+        \beta_1 &= \E(Y | X_1 = x_1 + 1) - \E(Y | X_1 = x_1)\\
+        &= \beta_0 + \beta_1(x_1 + 1) - (\beta_0 + \beta_1x_1)
+    \end{align}
+    If we select two sets of cases for $(X_1,Y)$ distribution, where $X_1$ differs by 1, we expect the associated $Y$ to differ by $\beta_1$ ``on average" (not for the difference of $Y$).
+    
+    Note: Not to claim as the result of causality, but statistical association between $X_1$ and $Y$.
+    \item Interpretation of $\sigma^2$:
+    
+    The variance of the noise around the regression line. It represents a typical distance of a point form the true regression line.
+\end{itemize}
+\section{Model Setup for Multiple Data Points}
+We assume multiple data points, $(X_{11},Y_1), (X_{21}, Y_2), \ldots, (X_{n1},Y_n)$, are generated from the same model.
+\begin{itemize}
+    \item $Y_i = \beta_0 + \beta_1X_{i1} + \varepsilon_i$, for $i = 1,\ldots,n$
+    \item $\E(\varepsilon_1) = 0$, for $i = 1,\ldots,n$
+    \item $Var(\varepsilon_i) = \sigma^2$, for $i = 1,\ldots,n$
+    \item $\varepsilon_i \indep X_{i1}$, $\varepsilon_j \indep X_{j1}$, and $\varepsilon_i \indep \varepsilon_j$
+\end{itemize}
+The above assumptions implies the following results:
+\begin{itemize}
+    \item $\E(Y_i | X_{i1} = x_{i1}) = \beta_0 + \beta_1x_{i1}$, for $i = 1,\ldots,n$
+    \item $Var(Y_i | X_{i1} = x_{i1}) = \sigma^2$, for $i = 1,\ldots,n$
+    \item $Y_i \not\indep Y_j$
+    \begin{align}
+        Cov(Y_i,Y_j) &= Cov(\beta_0 + \beta_1X_{i1} + \varepsilon_i, \beta_0 + \beta_1X_{j1} + \varepsilon_j)\\
+        &= Cov(\beta_1X_{i1} + \varepsilon_i, \beta_1X_{j1}+ \varepsilon_j)\\
+        &= \beta_1^2Cov(X_{i1},X_{j1}) + \beta_1Cov(X_{i1}, \varepsilon_j) + \beta_1Cov(\varepsilon_i, X_{j1}) + Cov(\varepsilon_i,\varepsilon_j)\\
+        &= \beta_1^2Cov(X_{i1},X_{j1}) + 0 + 0 + 0 = \beta_1^2Cov(X_{i1},X_{j1})
+    \end{align}
+    Since $X_{i1}$ and $X_{j1}$ are not necessarily independent (unless we assume so).
+    \item $Y_i \indep Y_j | X_{i1},X_{j1}$
+    \begin{align}
+        Cov(Y_i \indep Y_j |X_{i1} = x_{i1}, X_{j1} = x_{j1}) &= Cov(\beta_1X_{i1} + \varepsilon_i, \beta_1X_{j1}+ \varepsilon_j | X_{i1} = x_{i1}, X_{j1} = x_{j1})\\
+        &= Cov(\beta_1x_{i1} + \varepsilon_i, \beta_1x_{j1}+ \varepsilon_j)\\
+        &= Cov(c + \varepsilon_i, c'+ \varepsilon_j)\\
+        &= Cov(\varepsilon_i,\varepsilon_j) = 0
+    \end{align}
+\end{itemize}
+\section{Optimal Prediction for SLR}
+If we want to predict $Y$ using $X_1$, we want the optimal prediction which minimizes MSE:
+\begin{align}
+    m^*(\cdot) &= \argmin_{m^*(\cdot)} \E_{X_1,Y}((Y - m(X_1))^2)\\
+    m^*(x_1) &= \E(Y|X_1 = x_1) 
+\end{align}
+In addition, if we assume $(Y, X_1)$ follow the SLR model,
+\begin{align}
+    Y = \beta_0 + \beta_1X_1 + \varepsilon
+\end{align}
+with $\E(\varepsilon) = 0$, $Var(\varepsilon) = \sigma^2$, $\varepsilon \indep X_1$. Then the optimal prediction function has the linear form:
+\begin{align}
+    m^*(x_1) &= \E(Y|X_1 = x_1)\\
+    &= \E(\beta_0 + \beta_1X_1 + \varepsilon | X_1 = x_1)\\
+    &= \beta_0 + \beta_1 x_1
+\end{align}
+\section{Least Squares Estimators}
+Given $n$ observations, $(x_{11},y_1), \ldots, (x_{n1},y_n)$, to estimate $\beta_0,\beta_1$ in SLR:
+\begin{align}
+    (\hat{\beta}_0,\hat{\beta}_1) = \argmin_{\beta_0,\beta_1} MSE(\beta_0, \beta_1)
+\end{align}
+We estimate this by using the estimator $\reallywidehat{MSE}(\beta_0, \beta_1)$.
+\begin{itemize}
+    \item Residual: $e_i = y_i - \hat{\beta}_0 - \hat{\beta}_1x_{i1}$
+    \item Residual Sum of Squares: $SS_{Res} = \sumiton (y_i - \hat{\beta}_0 - \hat{\beta}_1x_{i1})^2 = \sumiton (y_i - \hat{y}_i)^2 = \sumiton e_i^2$
+    
+    An alternate formula is as follows: $SS_{Res} = \sumiton y_i^2 - n(\ybar)^2 - \betahat_1S_{XY} = SS_T - \betahat_1S_{XY}$ where $SS_T$ is the total sum of squares ($SS_T = \sumiton y_i^2 - n(\ybar)^2 = \sumiton (y_i - \ybar)^2$)
+    \item (Empirical) MSE: $\reallywidehat{MSE} = \frac{1}{n}\sumiton e_i^2 = \frac{1}{n}\sumiton(y_i - \hat{\beta}_0 - \hat{\beta}_1x_{i1})^2$
+\end{itemize}
+Least squares solve $\hat{\beta}_0,\hat{\beta}_1$ such that
+\begin{align}
+    (\hat{\beta}_0,\hat{\beta}_1) &= \argmin_{\beta_0,\beta_1} \reallywidehat{MSE}(\beta_0, \beta_1)\\
+    &= \argmin_{\beta_0,\beta_1}\frac{1}{n}\sumiton e_i^2\\
+    &= \argmin_{\beta_0,\beta_1} \frac{1}{n}\sumiton(y_i - \beta_0 - \beta_1x_{i1})^2
+\end{align}
+We can show that (ordinary least squares):
+\begin{align}
+    \hat{\beta}_1 &= \frac{S_{XY}}{S_{XX}} = \frac{\sumiton(y_i- \ybar)(x_{i1} - \xbar_1)}{\sumiton (x_{i1} - \xbar_1)^2}\\
+    \hat{\beta}_0 &= \ybar - \hat{\beta}_1\xbar_1
+\end{align}
+Note: least squares estimators are the same as the plugin estimators
+\bigbreak\noindent
+\textbf{\underline{Matrix Form}}:
+(MIGHT HAVE TO WATCH THIS PART OF THE LECTURE!)
+
+\noindent In matrix format
+\begin{align}
+    \hat{\beta} = (\boldX^\top\boldX)^{-1}\boldX^\top\boldY
+\end{align}
+We must check to make sure that $\boldX^\top\boldX$ is invertible.
+If $rank(\boldX^\top\boldX) = colrank(X) = 2$, the it is invertible. This means, unless
+\[\begin{pmatrix}
+    x_{11}\\
+    \vdots\\
+    x_{n1}
+\end{pmatrix} \text{ is linearly dependent to }\begin{pmatrix}
+    1\\
+    \vdots\\
+    1
+\end{pmatrix},
+\]
+then $\boldX^\top\boldX$ becomes not invertible (lol what).
+\bigbreak\noindent
+To uniquely find a least square estimator, $n\geq2$ in SLR (this makes a lot of sense. If it doesn't think what would happen if you had $n=1$). Ideally:
+\begin{align}
+    (\beta_0^*,\beta_1^*) = \argmin_{(\beta_0,\beta_1)}\E_{X,Y}[(Y-\beta_0-\beta_1X1)^2] \approx (\hat{\beta_0},\hat{\beta}_1) = \argmin_{\beta_0,\beta_1} \frac{1}{n}\sumiton(y_i - \beta_0 - \beta_1x_{i1})^2
+\end{align}
+Note: if the data points are all independent, the Law of Large Numbers tells us that:
+\begin{align}
+    \reallywidehat{MSE}(\beta_0,\beta_1) \xrightarrow[n \rightarrow \infty]{P} MSE(\beta_0,\beta_1)
+\end{align}
+If the SLR assumptions are true, then
+\begin{align}
+    (\hat{\beta}_0,\hat{\beta}_1) \xrightarrow[n \rightarrow \infty]{P} (\beta_0^*,\beta_1^*)
+\end{align}
+For SLR, $Y = \beta_0 + \beta_1X_1 + \varepsilon$. The condition of expectation of $Y$ given $X_1$ is $\E(Y | X_1) = \beta_0 + \beta_1X_1$, which is also the true regression function. From these results, we see that not only $\beta_0,\beta_1$ is the parameters of the SLR, but also $\beta_0,\beta_1$ can minimize the expected MSE (i.e. $\beta_0 = \beta_0^*, \beta_1 = \beta_1^*$).
+\section{Statistical Properties of Least Squares Estimators}
+First, we must understand the difference between an estimate and an estimator:
+\begin{itemize}
+    \item An \textit{estimator} is a random variable. Take $X_1, \ldots, X_n \sim D(\mu)$, $\mu = \E[X]$, and $X_i$'s are $iid$. $\hat{\theta}_n$ is an estimator of $\mu$ if $X_i$ have not been observed:
+    \begin{align}
+        \hat{\theta}_n = T(X_1,\ldots,X_n) = \frac{1}{n}\sumiton X_i
+    \end{align}
+    \item An \textit{estimate} is the realized value of $\hat{\theta}_n$.
+    \begin{align}
+        \hat{\theta}_n = T(x_1,\ldots, x_n) = \frac{1}{n} \sumiton x_i
+    \end{align}
+\end{itemize}
+\underline{Least Squares Estimators}: Given that the SLR model assumptions are satisfied, we show that least square estimators are unbiased:
+\begin{align}
+    \E(\hat{\beta}_1) = \beta_1,\ \E(\hat{\beta}_0) = \beta_0
+\end{align}
+and the variance of the estimators are: 
+\begin{align}
+    Var(\hat{\beta}_1 | x_{11}, \ldots, x_{n1}) = \frac{\sigma^2}{S_{XX}},\ Var(\hat{\beta}_0 | x_{11}, \ldots, x_{n1}) = \sigma^2\left(\frac{1}{n} + \frac{\xbar_1^2}{S_{XX}}\right)
+\end{align}
+\begin{proof}
+See handout or do it yourself.\\
+\end{proof}
+\section{How to estimate $\sigma^2$}
+Though $\sigma^2$ is not used to estimate $\betahat_0,\betahat_1$, we can use it to understand:
+\begin{itemize}
+    \item Randomness in $Y$.
+    \item $\sigma^2$ is related to $Var(\betahat_0 | \boldX)$ and $Var(\betahat_1 | \boldX)$.
+\end{itemize}
+We can estimate $\sigma^2$ using the data. We can see
+\[Y = \beta_0 + \beta_1X_1 + \varepsilon \Rightarrow \varepsilon = Y - \beta_0 - \beta_1X_1\]
+We can show that this is an unbiased estimator:
+\begin{align}
+    \E[(Y-\beta_0 - \beta_1X_1)^2] &= \E(\varepsilon^2)\\
+    &= Var(\varepsilon) + (\E(\varepsilon))^2\\
+    &= Var(\varepsilon) + 0\\
+    &= \sigma^2
+\end{align}
+\underline{Plug-in Principle}: Replace $X_1$ with $(x_{11},\ldots,x_{n1})$ and $Y$ with $(y_1,\ldots,y_n)$, replace $\E(\cdot)$ with $\frac{1}{n}\sumiton \cdot$, $\beta_1$ with $\betahat_1$, and $\beta_0$ with $\betahat_0$.
+\begin{align}
+    \sigma^2 &= \E[(Y - \beta_0 - \beta_1X_1)^2]\\
+    (\text{bias}) &\approx \frac{\sumiton (y_i - \betahat_0 - \betahat_1x_{i1})^2}{n}\\
+    (\text{unbiased}) &\approx \frac{\sumiton (y_i - \betahat_0 - \betahat_1x_{i1})^2}{n-2}\\
+    &= \frac{SS_{Res}}{n-2} =MS_{Res} := \hat{\sigma}^2
+\end{align}
+The unbiased adjustment has little affect when $n$ is large.
+\subsection{Using $\hat{\sigma}^2$ to estimate $Var(\betahat_0|\boldX)$ and $Var(\betahat_1|\boldX)$}
+From (74), we can plug in $\hat{\sigma^2}$:
+\begin{align}
+        Var(\hat{\beta}_1 | x_{11}, \ldots, x_{n1}) &= \frac{\hat{\sigma}^2}{S_{XX}}\\ Var(\hat{\beta}_0 | x_{11}, \ldots, x_{n1}) &= \hat{\sigma}^2\left(\frac{1}{n} + \frac{\xbar_1^2}{S_{XX}}\right)
+\end{align}
+where $x_{11}, \ldots, x_{n1} \equiv \boldX$. The \textit{standard errors} (se) are the square roots of the variances:
+\begin{align}
+    se(\hat{\beta}_1) &= \sqrt{\frac{\sigma^2}{S_{XX}}}\\ 
+    se(\hat{\beta}_0) &= \sqrt{\sigma^2\left(\frac{1}{n} + \frac{\xbar_1^2}{S_{XX}}\right)}    
+\end{align}
+Using $\hat{\sigma}^2$ gives us the \textit{estimated standard errors} (ese):
+\begin{align}
+    ese(\hat{\beta}_1) &= \sqrt{\frac{\hat{\sigma}^2}{S_{XX}}}\\ ese(\hat{\beta}_0) &= \sqrt{\hat{\sigma}^2\left(\frac{1}{n} + \frac{\xbar_1^2}{S_{XX}}\right)}
+\end{align}
+\subsection{Sampling Distribution of $\betahat_0$, $\betahat_1$, and $\hat{\sigma}^2$}
+With an additional assumption (Gaussian-Noise Simple Linear Regression (GN-SLR)), we can show:
+\begin{itemize}
+    \item $\betahat_1 \sim N\left(\beta_1, \frac{\sigma^2}{S_{XX}}\right) = N(\beta_1, se(\betahat_1)^2)$
+    \item $\betahat_0 \sim N\left(\beta_0, \sigma^2\left(\frac{1}{n}+\frac{\xbar_1^2}{S_{XX}}\right)\right) = N(\beta_0, se(\betahat_0)^2)$
+    \item $\frac{(n-2)\hat{\sigma}^2}{\sigma^2} \sim \chi^2_{n-p}$ (p=2, 1 predictor and 1 intercept)
+\end{itemize}
+\underline{GN-SLR Assumptions}:
+\begin{enumerate}
+    \item Same as SLR
+    \item Same as SLR
+    \item $\varepsilon \sim N(0, \sigma^2)$
+    \item Same as SLR
+\end{enumerate}
+GN-SLR is a special case of SLR, which has much more general conditions, with an additional Gaussian assumption, thus GN-SLR $\xrightarrow[]{\text{implies}}$ SLR. Under GN-SLR, $Y_i = \beta_0 + \beta_1X_{i1} + \varepsilon_i$ with $\varepsilon_i \sim N(0,\sigma^2)$, it suggests that $Y_i | X_{i1} \sim N(\beta_0+\beta_1X_{i1}, \sigma^2)$. (There's a checklist in this part of the notes (lec11), watch the associated lecture vid just know what's going on)
+
+\noindent By standardizing $\betahat_1$ and $\betahat_0$, we can show that
+\begin{itemize}
+    \item $\frac{\betahat_1 - \beta_1}{se(\betahat_1)} \sim N(0,1)$
+    \item $\frac{\betahat_0 - \beta_0}{se(\betahat_0)} \sim N(0,1)$
+\end{itemize}
+But, using $se$ is not ideal since it is related to the unknown $\sigma^2$, thus we use $ese$ instead:
+\begin{itemize}
+    \item $T_1 = \frac{\betahat_1 - \beta_1}{ese(\betahat_1)} \sim t_{n-2}$
+    \item $T_0 = \frac{\betahat_0 - \beta_0}{ese(\betahat_0)} \sim t_{n-2}$
+\end{itemize}
+\section{Maximum Likelihood Estimation}
+Using the GN-SLR setting, assume $Y_i = \beta_0 + \beta_1X_{i1} + \varepsilon_i$ with $\varepsilon_i \sim N(0,\sigma^2)$. We only observe $\{x_{i1}, y_i\}_{i=1}^{n}$. To estimate $\beta_0,\beta_1,\sigma^2$ using MLE:
+\[Y_i|X_{i1} \sim N(\beta_0+\beta_1X_{i1},\sigma^2)\]
+where $Y_i$ has the density function:
+\begin{align}
+    f_Y(y_i) = \frac{1}{\sqrt{2\pi\sigma^2}}exp\left\{-\frac{1}{2\sigma^2}(y_i - \beta_0-\beta_1x_{i1})^2\right\}
+\end{align}
+The likelihood function is
+\begin{align}
+    L(\beta_0,\beta_1,\sigma^2) &= \prod_{i=1}^n f_Y(y_i)\\
+    &= \prod_{i=1}^n \frac{1}{\sqrt{2\pi\sigma^2}}exp\left\{-\frac{1}{2\sigma^2}(y_i - \beta_0-\beta_1x_{i1})^2\right\}
+\end{align}
+To estimate $\beta_0,\beta_1,\sigma^2$, we solve the following optimization problem:
+\begin{align}
+    (\betahat_0,\betahat_1, \hat{\sigma}^2) &= \text{arg}\max_{\beta_0,\beta_1,\sigma^2} L(\beta_0,\beta_1,\sigma^2)\\
+    &= \text{arg}\max_{\beta_0,\beta_1,\sigma^2} \log L(\beta_0,\beta_1,\sigma^2)\\
+    &= \text{arg}\min_{\beta_0,\beta_1,\sigma^2} -\log L(\beta_0,\beta_1,\sigma^2)
+\end{align}
+The negative log-likelihood function
+\begin{align}
+    -\log L(\beta_0,\beta_1,\sigma^2)&= \frac{n}{2}\log\sigma^2 + \frac{1}{2\sigma^2}\sumiton(y_i - \beta_0-\beta_1x_{i1})^2 + c\\
+    \argmin_{\beta_0,\beta_1,\sigma^2} -\log L(\beta_0,\beta_1,\sigma^2) &= \min_{\sigma^2} \left\{\frac{n}{2}\log\sigma^2 + \frac{1}{2\sigma^2}\min_{\beta_0,\beta_1}\sumiton(y_i - \beta_0-\beta_1x_{i1})^2\right\}
+\end{align}
+which can be separated into
+\begin{align}
+    (\betahat_0,\betahat_1) &= \argmin_{\beta_0,\beta_1} \sumiton (y_i - \beta_0 - \beta_1x_{i1})^2\\
+    &= \argmin_{\beta_0,\beta_1} \frac{1}{n}\sumiton (y_i - \beta_0 - \beta_1x_{i1})^2
+\end{align}
+\begin{align}
+    \min_{\sigma^2} \left\{\frac{n}{2}\log\sigma^2 + \frac{1}{2\sigma^2}\sumiton(y_i - \betahat_0-\betahat_1x_{i1})^2\right\} &= \min_{\sigma^2} \left\{\frac{n}{2}\log\sigma^2 + \frac{1}{2\sigma^2}SS_{Res}\right\}\\
+    &\Rightarrow \frac{\partial}{\partial \sigma^2}\left\{\frac{n}{2}\log\sigma^2 + \frac{1}{2\sigma^2}SS_{Res}\right\}\\ 
+    &= \frac{n}{2\sigma^2} - \frac{SS_{Res}}{2\sigma^4} = 0
+\end{align}
+So, we obtain:
+\begin{itemize}
+    \item $\hat{\sigma}^2_{MLE} = \frac{SS_{Res}}{n}$ (biased)
+    \item $\hat{\sigma}^2_{LS} = \frac{SS_{Res}}{n-2}$ (unbiased)
+\end{itemize}
+In summary:
+\begin{itemize}
+    \item $\betahat_{plug} = \betahat_{LS} = \betahat_{MLE}$
+    \item $\hat{\sigma}^2_{LS} = \frac{n}{n-2}\hat{\sigma}^2_{MLE}$
+\end{itemize}
+\end{document}

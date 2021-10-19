@@ -1,0 +1,268 @@
+\documentclass{article}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath}
+\usepackage{amsthm}
+\usepackage{amssymb}
+\usepackage{mathtools}
+\usepackage[margin=1.0in]{geometry}
+\newcommand{\argmax}{\text{arg}\max}
+\newcommand{\argmin}{\text{arg}\min}
+
+\title{COMP551 Notes}
+\author{Chany Ahn}
+\date{}
+
+\begin{document}
+
+\maketitle
+
+\section{KNN}
+\subsection{Real-Valued Feature-Vector Distance Metrics}
+\begin{itemize}
+    \item Euclidean Distance
+    \[D_{Euclid}(x,x') = \sqrt{\sum_{d=1}^D(x_d - x_d')^2}\]
+    \item Manhattan Distance
+    \[D_{Manhattan}(x, x') = \sum_{d=1}^D|x_d - x_d'|\]
+    \item Minkowski distance
+    \[D_{Minkowski}(x,x') = \left(\sum_{d=1}^D|x_d - x_d'|^p\right)^{\frac{1}{p}}\]
+    \item Cosine similarity
+    \[D_{Cosine}(x,x') = \frac{x^\top x'}{||x||||x'||}\]
+\end{itemize}
+\subsection{Discrete Feature-Vector Distance Metrics}
+\begin{itemize}
+    \item Hamming Distance
+    \[D_{Hamming}(x,x') = \sum_{d=1}^D \mathbb{I}(x_d \ne x_d')\]
+\end{itemize}
+\subsection{Label by Majority}
+Estimate the probability that an input should be classified by a given class:
+\[p(y^{new} = c | x^{new}) = \frac{1}{K}\sum_{x^{(k)} \in KNN(x^{new})}\mathbb{I}(y^{(k)} = c)\]
+\section{Decision Trees}
+\section{Important Concepts}
+\subsection{Evaluation Metrics}
+For binary classifiers, we have these metrics based on the confusion table:
+\begin{align}
+    Accuracy  &= \frac{TP + TN}{P + N}\\
+    Error\ rate &= \frac{FP + FN}{P + N}\\
+    Precision &= \frac{TP}{RP}\\
+    Recall &= \frac{TP}{P}\\
+    F_1score &= 2 \cdot \frac{Precision \times Recall}{Precision + Recall}
+\end{align}
+\section{Linear Regression}
+\subsection{Linear Model}
+Assuming a scalar output, $f_w : \mathbb{R}^D \rightarrow \mathbb{R}$ where:
+\begin{align}
+    f_w(\vec{x}) = w_0 + w_1x_1 + \ldots + w_Dx_D
+\end{align}
+where $w$ is the model parameters. A better generalization is letting $\vec{x}^\top = [1,x_1,\ldots, x_D]$ such that $f_w(\vec{x}) = w^\top x$.
+\subsection{Loss}
+To fit the data, must minimize a loss function.
+\subsubsection{L2 Loss}
+Loss for a single instance in the data.
+\begin{align}
+    L(y,\hat{y}) = \frac{1}{2}(y -\hat{y})^2
+\end{align}
+\subsubsection{Cost Function}
+Sum of squared errors (over all instances).
+\begin{align}
+    J(w) = \frac{1}{2}\sum_{n=1}^N\left(y^{(n)} - w^\top x \right)
+\end{align}
+\subsection{Linear Least Squares}
+\begin{align}
+    w^* = min_w\sum_n\left(y^{(n)} - w^\top x^{(n)}\right)^2
+\end{align}
+\subsection{Matrix Form}
+\begin{align}
+    \hat{y} = Xw
+\end{align}
+where $X$ is $N \times D$, $\hat{y}$ is $N \times 1$, and $w$ is $D \times 1$.
+\subsubsection{Linear Least Squares: Matrix Form}
+\begin{align}
+    \text{argmin}_w \frac{1}{2}||y - Xw||_2^2 = \frac{1}{2}(y - Xw)^\top(y-Xw)
+\end{align}
+\subsection{Optimal $w$: $D = 1$ Case}
+\begin{align}
+    w^* = \frac{\sum_n x^{(n)y^{(n)}}}{\sum_n x^{(n)2}}
+\end{align}
+\subsection{Optimal $w$: Any $D$}
+\begin{align}
+    \sum_n(w^\top x^{(n)} - y^{(n)})x_d^{(n)} = 0\ \ \forall d \in \{1, \ldots, D\}
+\end{align}
+\subsection{Normal Equation}
+\begin{align}
+    X^\top(y-Xw) = 0
+\end{align}
+\subsubsection{Closed Form Solution}
+\begin{align}
+    w^* &= (X^\top X)^{-1}X^\top y\\
+    \hat{y} &= Xw = X(X^\top X)^{-1}X^\top y
+\end{align}
+where (16) is the projection into column space of $X$.
+\subsection{Miltiple Targets}
+Instead of $y \in \mathbb{R}^N$, we have $Y \in \mathbb{R}^{N \times D'}$. Then we have
+\begin{align}
+    \hat{Y} = XW
+\end{align}
+where $W$ is $D \times D'$. $W^*$ is found by
+\begin{align}
+    W^* = (X^\top X)^{-1}X^\top Y
+\end{align}
+\subsection{Nonlinear Basis Functions}
+Now denote the features by $\phi_d(x), \forall d$. So, the linear regression problem becomes $f_w = \sum_d w_d \phi_d(x)$. Thus, the solution becomes
+\begin{align}
+    (\phi^\top\phi)w^* = \phi^\top y
+\end{align}
+\subsubsection{Nonlinear Basis Functions}
+\begin{itemize}
+    \item Polynomial bases
+    \[\phi_k(x) = x^k\]
+    \item Gaussian bases
+    \[\phi_k(x) = e^{-\frac{(x - \mu_k)^2}{s^2}}\]
+    \item Sigmoid bases
+    \[\phi_k(x) = \frac{1}{1+e^{-\frac{x - \mu_k}{s}}}\]
+\end{itemize}
+\section{Logistic Regression}
+\subsection{Squashing Function}
+\[w^\top x \rightarrow \sigma(w^\top x)\]
+The desirable properties of this function $\sigma : \mathbb{R} \rightarrow \mathbb{R}$:
+\begin{itemize}
+    \item all $w^\top x > 0$ are squashed close together.
+    \item all $w^\top x < 0$ are squashed close together.
+\end{itemize}
+\subsection{Logistic Function}
+\begin{align}
+    \sigma(z) = \frac{1}{1+e^{-x}}
+\end{align}
+where the decision boundary is
+\begin{align}
+    w^\top x = 0 \iff \sigma(w^\top x) = \frac{1}{2}.
+\end{align}
+This interprets the prediction as a class probability
+\begin{align}
+    \hat{y} = p_w(y = 1| x) = \sigma(w^\top x)
+\end{align}
+where the log-ratio of class probabilities is linear
+\begin{align}
+    \log\frac{\hat{y}}{1-\hat{y}} = \log\frac{\sigma(w^\top x)}{1-\sigma(w^\top x)} = \log\frac{1}{e^{-w\top x}} = w^\top x
+\end{align}
+\subsection{The Loss}
+\begin{itemize}
+    \item Misclassification Error
+    \[L_{0/1}(\hat{y},y) = \mathbb{I}\left(y\ne \text{sign} \left(\hat{y} - \frac{1}{2}\right)\right)\]
+    \item L2 Loss (see (7))
+    \item Cross-Entropy Loss (Loss considered for Logistic Regression =))
+    \[L_{CE}(\hat{y},y) = -y\log(\hat{y}) - (1-y)\log(1-\hat{y})\]
+\end{itemize}
+\subsection{Cost Function}
+\begin{align}
+    J(w) = \sum_{n=1}^N y^{(n)}\log(1+e^{-w^\top x}) + (1 - y^{(n)})\log(1+e^{w^\top x})
+\end{align}
+\section{Maximum Likelihood}
+\subsection{Likelihood}
+\begin{align}
+    \mathcal{L}(\theta;\mathcal{D}) = \prod_{x\in \mathcal{D}}p(x;\theta)
+\end{align}
+Using the product creates extreme values.
+\subsection{Log-Likelihood}
+\begin{align}
+    l(\theta; \mathcal{D}) = \log(\mathcal{L}(\theta;\mathcal{D})) = \sum_{x\in \mathcal{D}}\log(p(x;\theta))
+\end{align}
+Has the same behaviour, but log-likelihood is well-behaved. To find $\theta^* = \text{arg}\max_\theta l(\theta;\mathcal{D})$, must solve for $\frac{\partial}{\partial \theta}l(\theta;\mathcal{D}) = 0$ (if there is an analytical solution). 
+
+\bigbreak\noindent$\theta^{MLE} = \text{arg}\max_\theta p(\mathcal{D}|\theta)$
+.
+\subsection{Categorical Distributions}
+\begin{itemize}
+    \item Likelihood: $p(\mathcal{D}|\theta) = \prod_{x\in \mathcal{D}} Cat(x|\theta) = \prod_{x \in \mathcal{D}}\prod_k \theta_k^{\mathbb{I}(x=k)}$
+    \item Log-Likelihood: $l(\theta,\mathcal{D}) = \sum_{x\in \mathcal{D}}\sum_k\mathbb{I}(x=k)\log(\theta_k)$
+\end{itemize}
+$\theta_k^{MLE} = \frac{N_k}{N}$.
+\subsection{Bayesian Approach}
+Max-likelihood does not reflect uncertainty. The Bayesian approach is as follows:
+\begin{itemize}
+    \item We maintain a distribution over the parameters: $p(\theta)$.
+    \item After observing $\mathcal{D}$, update the distribution given $\mathcal{D}$: $p(\theta|\mathcal{D})$.
+\end{itemize}
+Use Baye's Theorem:
+\begin{align}
+    p(\theta|\mathcal{D}) = \frac{p(\theta)p(\mathcal{D}|\theta)}{p(\mathcal{D})}
+\end{align}
+where $p(\theta) = \int p(\theta)p(\mathcal{D}|\theta)d\theta$.
+\subsection{Maximum a Posteriori (MAP)}
+Use the parameter with the highest posterior probability:
+\begin{align}
+    \theta^{MAP} = \text{arg}\max_\theta p(\theta|\mathcal{D}) = \text{arg}\max_\theta p(\theta)p(\mathcal{D}|\theta)
+\end{align}
+\subsection{Maximum Likelihood in ML}
+Consider linear regression and logistic regression. The learning that ML algos involve finding $w$ that maximizes the likelihood of the training data (many algorithms assume some probabilistic model).
+\begin{align}
+    w^* = \argmax_w\sum_n\log p(y^{(n)} | x^{(n)}; w)
+\end{align}
+\subsubsection{Probabilistic Interpretation of Linear Regression}
+Assume $p(y|x;w)$ with following form:
+\begin{align}
+    p_w(y|x) = \mathcal{N}(y|w^\top x, \sigma^2) = \frac{1}{\sqrt{2\pi \sigma^2}}e^{-\frac{(y-w^\top x)^2}{w\sigma^2}}
+\end{align}
+The likelihood is as follows:
+\begin{itemize}
+    \item $\mathcal{L}(w) = \prod_{n=1}^N p(y^{(n)}| x^{(n)};w)$
+    \item $l(w) = \sum_n -\frac{1}{2\sigma^2}(y^{(n)} - w^\top x^{(n)})^2 + \text{constants}$.
+    \item Max-Likelihood Parameters: $w^* = \argmax_wl(w) = \argmin_w \frac{1}{2}\sum_n(y^{(n)} - w^\top x^{(n)})^2$ (linear least squares!).
+\end{itemize}
+\subsubsection{Probabilistic View of Logistic Regression}
+Interpret the prediction as class probability: $\hat{y} = p(y=1|x;w) = \sigma(w^\top x)$, so we have a Bernoulli likelihood:
+\begin{align}
+    p(y^{(n)}|x^{(n)};w) = \text{Bernoulli}(y^{(n)};\sigma(w^\top x^{(n)})) = \hat{y}^{(n)^{y^{(n)}}}(1-\hat{y}^{(n)})^{1-y^{(n)}}
+\end{align}
+The $w$ that maximizes the log likelihood:
+\begin{align}
+    w^* &= \max\sum_{n=1}^N\log p(y^{(n)}|x^{(n)};w)\\
+    &= \max_w \sum_{n=1}^N y^{(n)}\log(\hat{y}^{(n)}) + (1-y^{(n)})\log(1-\hat{y}^{(n)})\\
+    &= \min_wJ(w)
+\end{align}
+The last equality is the cross entropy cost function, thus cross entropy loss maximizes the conditional likelihood in logistic regression!
+\subsubsection{Multiclass Classification for Logistic Regression}
+If we have $C$ classes (rather than a binary classification), we use the categorical likelihood:
+\begin{align}
+    \text{Cat}(y | \hat{y}) = \prod_{c=1}^C \hat{y}_c^{\mathbb{I}(y=c)}
+\end{align}
+The \textbf{softmax} takes a vector of real numbers and produces probabilites:
+\begin{align}
+    \hat{y}_c = \text{softmax}(z)_c = \frac{e^{z_c}}{\sum_{c'=1}^C e^{z_{c'}}}
+\end{align}
+so $\sum_c \hat{y}_c = 1$. If we produce the input to softmax using a linear model:
+\begin{align}
+    \hat{y}_c = \text{softmax}([w_1^\top x, \ldots, w_C^\top x])_c = \frac{e^{w_c^\top x}}{\sum_{c'}e^{w_{c'}^\top x}}
+\end{align}
+We can put these vectors as the \textit{columns of the weight matrix} $W$.
+\begin{align}
+    \hat{y} = \text{softmax}(Wx) = \frac{e^{Wx}}{\mathbf{1}^\top e^{Wx}}
+\end{align}
+where $dim(W) = C \times D$, $dim(x) = D \times 1$, and $dim (\hat{y}) = C \times 1$. This produces a vector of class probabilities $\hat{y}$ for each input $x$.
+\subsection{Cost Function}
+The likelihood of the data as a function of model parameters:
+\begin{align}
+    \mathcal{L}(\{w_c\}) = \prod_{n=1}^N \text{softmax}(Wx^{(n)})^\top y^{(n)}
+\end{align}
+$y^{(n)}$ is one-hot encoded.
+
+\noindent Softmax cross entropy cost function is the negative of the log-likelihood:
+\begin{align}
+    J(\{w_c\}) = -\left(\sum_{n=1}^N (Wx^{(n)})^\top y^{(n)} - \log\sum_c e^{w_c x^{(n)}}\right)
+\end{align}
+The naive implementation of log-sum-exp cause over/underflow.
+\begin{align}
+    \log\sum_ce^{z_c} = \overline{z} + \log\sum_c e^{z_c - \overline{z}}
+\end{align}
+where $\overline{z} \leftarrow \max_c z_c$.
+\section{Gradient Descent Methods}
+\begin{align}
+    \nabla J(w) = \left[\frac{\partial}{\partial w_1}J(w), \ldots, \frac{\partial}{\partial w_D}J(w)\right]
+\end{align}
+\subsection{Iterative Algorithm}
+\begin{itemize}
+    \item Starts from some $w^{\{0\}}$
+    \item update using gradient: $w^{\{t+1\}} \leftarrow w^{\{t\}} - \alpha \nabla J(w^{\{t\}})$
+\end{itemize}
+This converges to a local minima.
+\subsection{Convex Function}
+\end{document}
