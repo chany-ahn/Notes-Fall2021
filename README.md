@@ -1,1 +1,4 @@
-# COMP330-Notes
+# Notes for the semester
+This is a WORK IN PROGRESS. I am not always on top of my stuff, so I am going to continually update this over the semester. I plan to have this done before the exam hopefully. Furthermore, a warning to those planning to use theses. I don't write everything (for example, for COMP330 I don't draw any of the DFAs since I use those as practice later on, also it's kind of a pain to have to draw them using google draw or whatever). I only write stuff that I think is important . I also like to add my own dialogue in my notes, so if you think that's annoying then you can deal with it. I'm also adding the latex markdown if you want to use mine as a starting point. If you're goning to do this though, just know it's incredibly time consuming especially if you don't know latex.
+
+Good luck with school.
